@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — OpenShelf</title>
+  <link rel="icon" type="image/x-icon" href="./img.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./dash.css">
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a class="logo" href="index.html">
+      <img src="./img.jpg" alt="OpenShelf Logo" class="logo-img">Open<span>Shelf</span>
+    </a>
+    <div class="topbar-badge">ADMIN</div>
+    <div class="topbar-right">
+      <a href="../index.html" class="topbar-link" target="_blank">🏠 View Library</a>
+      <button class="btn-logout" onclick="logout()">← Sign Out</button>
+    </div>
+  </div>
+
+  <div class="body-wrap">
+
+    <!-- SIDEBAR NAV -->
+    <aside class="sidebar">
+      <div class="nav-section-title">Main</div>
+      <div class="nav-item active" onclick="showSection('dashboard',this)">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showSection('books',this)">
+        <span class="nav-icon">📚</span> All Books
+        <span class="nav-badge" id="sidebarCount">24</span>
+      </div>
+      <div class="nav-item" onclick="showSection('addBook',this)">
+        <span class="nav-icon">➕</span> Add New Book
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="nav-section-title">Filter by Category</div>
+      <div class="nav-item" onclick="filterCat('All');showSection('books',null)">
+        <span class="nav-icon">📖</span> All Categories
+      </div>
+      <div class="nav-item" onclick="filterCat('Engineering');showSection('books',null)">
+        <span class="nav-icon" style="color:#60a5fa">⚙️</span> Engineering
+      </div>
+      <div class="nav-item" onclick="filterCat('Science');showSection('books',null)">
+        <span class="nav-icon" style="color:#4ade80">🔬</span> Science
+      </div>
+      <div class="nav-item" onclick="filterCat('Programming');showSection('books',null)">
+        <span class="nav-icon" style="color:#a78bfa">💻</span> Programming
+      </div>
+      <div class="nav-item" onclick="filterCat('Mathematics');showSection('books',null)">
+        <span class="nav-icon" style="color:#f87171">📐</span> Mathematics
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- ══ DASHBOARD ══ -->
+      <div class="section active" id="sec-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Dashboard</div>
+            <div class="page-sub">Library overview at a glance</div>
+          </div>
+          <button class="btn-primary" onclick="showSection('addBook',null);highlightNav('addBook')">➕ Add New Book</button>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <span class="stat-icon">📚</span>
+            <div><div class="stat-val" id="statTotal">0</div><div class="stat-key">Total Books</div></div>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">🆕</span>
+            <div><div class="stat-val" id="statAdded">0</div><div class="stat-key">Admin Added</div></div>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">🔥</span>
+            <div><div class="stat-val" id="statHot">0</div><div class="stat-key">Trending</div></div>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">🆓</span>
+            <div><div class="stat-val" id="statFree">0</div><div class="stat-key">Free Books</div></div>
+          </div>
+        </div>
+
+        <!-- Recent additions -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <strong style="font-size:14px;">Recently Added by Admin</strong>
+            <button class="btn-outline btn-sm" onclick="showSection('books',null);highlightNav('books')">View All →</button>
+          </div>
+          <div id="recentList" style="padding:8px 0;"></div>
+        </div>
+
+        <!-- Category breakdown -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+            <strong style="font-size:14px;">Category Breakdown</strong>
+          </div>
+          <div id="catBreakdown" style="padding:16px 20px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;"></div>
+        </div>
+      </div>
+
+      <!-- ══ ALL BOOKS ══ -->
+      <div class="section" id="sec-books">
+        <div class="page-header">
+          <div>
+            <div class="page-title">All Books</div>
+            <div class="page-sub" id="booksSubtitle">Manage your complete library collection</div>
+          </div>
+          <button class="btn-primary" onclick="showSection('addBook',null);highlightNav('addBook')">➕ Add New Book</button>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box">
+            <span style="color:var(--muted)">⌕</span>
+            <input type="text" id="tableSearch" placeholder="Search books..." oninput="renderTable()" />
+          </div>
+          <select class="filter-select" id="tableCatFilter" onchange="renderTable()">
+            <option value="">All Categories</option>
+            <option>Engineering</option>
+            <option>Science</option>
+            <option>Programming</option>
+            <option>Mathematics</option>
+          </select>
+          <select class="filter-select" id="tableSrcFilter" onchange="renderTable()">
+            <option value="">All Sources</option>
+            <option value="static">Built-in</option>
+            <option value="dynamic">Admin Added</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Book</th>
+                <th>Category</th>
+                <th>Format</th>
+                <th>Rating</th>
+                <th>Source</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="booksTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══ ADD BOOK ══ -->
+      <div class="section" id="sec-addBook">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Add New Book</div>
+            <div class="page-sub">Fill in the details — the book will appear instantly on the library</div>
+          </div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;">
+          <div id="addFormContent"></div>
+          <div class="form-footer" style="padding:0;margin-top:24px;">
+            <button class="btn-outline" onclick="resetAddForm()">✕ Clear Form</button>
+            <button class="btn-primary" onclick="submitAddBook()">✓ Add Book to Library</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ══ EDIT MODAL ══ -->
+  <div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Edit Book</div>
+          <div class="modal-sub">Update book details</div>
+        </div>
+        <button class="modal-close-btn" onclick="closeEditModal()">✕</button>
+      </div>
+      <div id="editFormContent"></div>
+      <div class="form-footer">
+        <button class="btn-outline" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-primary" onclick="submitEditBook()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CONFIRM DIALOG ══ -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <div class="confirm-icon">🗑️</div>
+      <div class="confirm-title">Delete Book?</div>
+      <div class="confirm-sub" id="confirmText">This will remove the book from the library. This action cannot be undone.</div>
+      <div class="confirm-actions">
+        <button class="btn-outline" onclick="closeConfirm()">Cancel</button>
+        <button class="btn-danger" id="confirmYes" style="padding:8px 20px;font-size:13px;">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ══ -->
+  <div class="toast" id="toast">
+    <span id="toastIcon">✓</span>
+    <span id="toastMsg"></span>
+  </div>
+
+<script>
+// ─── Auth guard ───────────────────────────────────────────────────
+if (localStorage.getItem('bh_admin_auth') !== 'true') {
+  window.location.replace('login.html');
+}
+
+// ─── Static base books (read-only, built into the site) ──────────
+const STATIC_BOOKS = [
+  { id:1,  title:"Fundamentals of Electrical Engineering", author:"Charles Hayt", cat:"Engineering", fmt:"PDF", rating:4.8, pages:782, year:2023, badge:"hot", free:true, tags:["circuits","electronics","signals"], desc:"A comprehensive introduction to electrical engineering principles.", icon:"⚡" },
+  { id:2,  title:"Structural Analysis", author:"R.C. Hibbeler", cat:"Engineering", fmt:"PDF", rating:4.7, pages:622, year:2022, badge:"", free:true, tags:["structures","mechanics","beams"], desc:"Master the fundamentals of structural analysis.", icon:"🏗️" },
+  { id:3,  title:"Thermodynamics: An Engineering Approach", author:"Cengel & Boles", cat:"Engineering", fmt:"PDF", rating:4.9, pages:1008, year:2023, badge:"hot", free:true, tags:["heat","energy","systems"], desc:"The gold standard textbook for thermodynamics.", icon:"🌡️" },
+  { id:4,  title:"Engineering Mechanics: Dynamics", author:"Meriam & Kraige", cat:"Engineering", fmt:"PDF", rating:4.5, pages:584, year:2021, badge:"", free:true, tags:["dynamics","motion","forces"], desc:"Rigorous treatment of dynamics and kinematics.", icon:"🔧" },
+  { id:5,  title:"Materials Science & Engineering", author:"Callister & Rethwisch", cat:"Engineering", fmt:"PDF", rating:4.6, pages:896, year:2022, badge:"new", free:true, tags:["materials","properties","metals"], desc:"Microstructure and properties of engineering materials.", icon:"🔩" },
+  { id:6,  title:"Fluid Mechanics", author:"Frank White", cat:"Engineering", fmt:"EPUB", rating:4.4, pages:776, year:2021, badge:"", free:true, tags:["fluids","flow","pressure"], desc:"Complete treatment of fluid statics and dynamics.", icon:"💧" },
+  { id:7,  title:"Control Systems Engineering", author:"Norman Nise", cat:"Engineering", fmt:"PDF", rating:4.7, pages:944, year:2023, badge:"new", free:false, tags:["control","systems","feedback"], desc:"Introduction to control systems theory.", icon:"🎛️" },
+  { id:8,  title:"A Brief History of Time", author:"Stephen Hawking", cat:"Science", fmt:"EPUB", rating:4.9, pages:212, year:2020, badge:"hot", free:true, tags:["cosmology","physics","universe"], desc:"Hawking's masterpiece covering black holes and the Big Bang.", icon:"🌌" },
+  { id:9,  title:"The Selfish Gene", author:"Richard Dawkins", cat:"Science", fmt:"PDF", rating:4.8, pages:360, year:2021, badge:"", free:true, tags:["evolution","genetics","biology"], desc:"Gene-centric view of evolution.", icon:"🧬" },
+  { id:10, title:"Cosmos", author:"Carl Sagan", cat:"Science", fmt:"EPUB", rating:4.9, pages:365, year:2020, badge:"hot", free:true, tags:["astronomy","universe","history"], desc:"Sagan's journey through the universe.", icon:"🪐" },
+  { id:11, title:"The Double Helix", author:"James Watson", cat:"Science", fmt:"PDF", rating:4.6, pages:226, year:2021, badge:"", free:true, tags:["DNA","biology","history"], desc:"Account of the discovery of DNA's structure.", icon:"🔬" },
+  { id:12, title:"Feynman Lectures on Physics", author:"Richard Feynman", cat:"Science", fmt:"Article", rating:5.0, pages:1552, year:2022, badge:"hot", free:true, tags:["physics","quantum","electromagnetism"], desc:"The legendary lecture series from Nobel laureate Feynman.", icon:"⚛️" },
+  { id:13, title:"Six Easy Pieces", author:"Richard Feynman", cat:"Science", fmt:"EPUB", rating:4.7, pages:176, year:2022, badge:"new", free:false, tags:["physics","popular science","atoms"], desc:"Six chapters from the Feynman Lectures for general readers.", icon:"🔭" },
+  { id:14, title:"Clean Code", author:"Robert C. Martin", cat:"Programming", fmt:"PDF", rating:4.8, pages:431, year:2023, badge:"hot", free:true, tags:["best practices","refactoring","craftsmanship"], desc:"Handbook of agile software craftsmanship.", icon:"💻" },
+  { id:15, title:"The Pragmatic Programmer", author:"Hunt & Thomas", cat:"Programming", fmt:"PDF", rating:4.9, pages:352, year:2023, badge:"", free:true, tags:["career","philosophy","tools"], desc:"Timeless advice on software development.", icon:"🛠️" },
+  { id:16, title:"Design Patterns", author:"Gang of Four", cat:"Programming", fmt:"EPUB", rating:4.7, pages:395, year:2020, badge:"", free:true, tags:["patterns","OOP","architecture"], desc:"Catalog of reusable object-oriented design patterns.", icon:"🏛️" },
+  { id:17, title:"Introduction to Algorithms", author:"CLRS", cat:"Programming", fmt:"PDF", rating:4.8, pages:1312, year:2022, badge:"hot", free:true, tags:["algorithms","data structures","theory"], desc:"The definitive textbook on algorithms.", icon:"📊" },
+  { id:18, title:"You Don't Know JS", author:"Kyle Simpson", cat:"Programming", fmt:"Article", rating:4.6, pages:278, year:2023, badge:"new", free:true, tags:["JavaScript","web","async"], desc:"Deep dive into JavaScript's core mechanisms.", icon:"🌐" },
+  { id:19, title:"Python Crash Course", author:"Eric Matthes", cat:"Programming", fmt:"PDF", rating:4.5, pages:544, year:2023, badge:"new", free:false, tags:["Python","beginner","projects"], desc:"Hands-on, project-based Python introduction.", icon:"🐍" },
+  { id:20, title:"Calculus: Early Transcendentals", author:"James Stewart", cat:"Mathematics", fmt:"PDF", rating:4.8, pages:1368, year:2023, badge:"", free:true, tags:["calculus","limits","integrals"], desc:"The most widely used calculus textbook.", icon:"∫" },
+  { id:21, title:"Linear Algebra Done Right", author:"Sheldon Axler", cat:"Mathematics", fmt:"PDF", rating:4.9, pages:340, year:2022, badge:"hot", free:true, tags:["linear algebra","vectors","matrices"], desc:"Fresh approach to linear algebra.", icon:"📐" },
+  { id:22, title:"Introduction to Probability", author:"Bertsekas & Tsitsiklis", cat:"Mathematics", fmt:"EPUB", rating:4.7, pages:544, year:2022, badge:"", free:true, tags:["probability","statistics","random"], desc:"Introduction to probability theory and applications.", icon:"🎲" },
+  { id:23, title:"Number Theory", author:"Niven, Zuckerman & Montgomery", cat:"Mathematics", fmt:"PDF", rating:4.6, pages:544, year:2021, badge:"", free:true, tags:["number theory","primes","proofs"], desc:"Classic introduction to number theory.", icon:"🔢" },
+  { id:24, title:"Graph Theory", author:"Diestel", cat:"Mathematics", fmt:"PDF", rating:4.8, pages:428, year:2023, badge:"new", free:true, tags:["graphs","algorithms","combinatorics"], desc:"Comprehensive treatment of graph theory.", icon:"🕸️" }
+];
+
+const ICONS = ['📚','📖','📝','📄','🔬','⚛️','🧬','🌌','🪐','⚡','🔧','🏗️','💧','🌡️','🔩','🎛️','💻','🛠️','🏛️','📊','🌐','🐍','∫','📐','🎲','🔢','🕸️','🔭','🔑','🎓','🧮','🧪'];
+const CATS  = ['Engineering','Science','Programming','Mathematics'];
+const FMTS  = ['PDF','EPUB','Article','Video'];
+const CAT_COLORS = { Engineering:"#60a5fa", Science:"#4ade80", Programming:"#a78bfa", Mathematics:"#f87171" };
+
+// ─── Dynamic books (admin-added, stored in localStorage) ─────────
+// PDFs are stored separately (key: bh_pdf_<id>) so the main
+// books array stays small and never hits the localStorage quota.
+function getDynamic() {
+  try {
+    const books = JSON.parse(localStorage.getItem('bh_books') || '[]');
+    // Re-attach pdfData from individual keys
+    return books.map(b => {
+      if (b.hasPdf) {
+        try { b.pdfData = localStorage.getItem('bh_pdf_' + b.id) || null; } catch(e) {}
+      }
+      return b;
+    });
+  } catch(e) { return []; }
+}
+
+function saveDynamic(arr) {
+  // Metadata stays in localStorage. Actual uploaded PDFs are saved by server.js
+  // into uploads/books/ and referenced using pdfUrl.
+  const slim = arr.map(b => {
+    const { pdfData, ...rest } = b;
+    rest.hasPdf = !!(pdfData || rest.pdfUrl);
+
+    if (pdfData && !rest.pdfUrl) {
+      // Fallback only: used when the project is opened without the Node server.
+      try { localStorage.setItem('bh_pdf_' + rest.id, pdfData); } catch(e) {
+        showToast('⚠️', 'PDF too large to store — only link/metadata saved');
+        rest.hasPdf = false;
+      }
+    } else {
+      try { localStorage.removeItem('bh_pdf_' + rest.id); } catch(e) {}
+    }
+    return rest;
+  });
+  try {
+    localStorage.setItem('bh_books', JSON.stringify(slim));
+  } catch(e) {
+    showToast('⚠️', 'Save failed — storage full. Try removing other books.');
+  }
+}
+
+function getAllBooks() {
+  return [...STATIC_BOOKS, ...getDynamic()];
+}
+
+// ─── State ────────────────────────────────────────────────────────
+let editingId    = null;
+let confirmCb    = null;
+let tableCatForce = null;
+let toastTimer;
+
+// ─── Init ─────────────────────────────────────────────────────────
+buildAddForm('addFormContent');
+updateStats();
+renderTable();
+renderRecent();
+renderCatBreakdown();
+
+// ─── Sidebar nav ─────────────────────────────────────────────────
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  if (el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+  }
+  if (id === 'books')     { renderTable(); updateSubtitle(); }
+  if (id === 'dashboard') { updateStats(); renderRecent(); renderCatBreakdown(); }
+}
+function highlightNav(id) {
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.textContent.toLowerCase().includes(
+      id === 'addBook' ? 'add' : id === 'books' ? 'all books' : id
+    ));
+  });
+}
+function filterCat(cat) {
+  tableCatForce = cat === 'All' ? '' : cat;
+  document.getElementById('tableCatFilter').value = tableCatForce;
+  renderTable();
+  updateSubtitle();
+}
+
+// ─── Stats ────────────────────────────────────────────────────────
+function updateStats() {
+  const all     = getAllBooks();
+  const dynamic = getDynamic();
+  document.getElementById('statTotal').textContent = all.length;
+  document.getElementById('statAdded').textContent = dynamic.length;
+  document.getElementById('statHot').textContent   = all.filter(b => b.badge === 'hot').length;
+  document.getElementById('statFree').textContent  = all.filter(b => b.free).length;
+  document.getElementById('sidebarCount').textContent = all.length;
+}
+function updateSubtitle() {
+  const cat = document.getElementById('tableCatFilter')?.value || '';
+  document.getElementById('booksSubtitle').textContent =
+    cat ? `Showing books in ${cat}` : 'Manage your complete library collection';
+}
+
+// ─── Recent list ─────────────────────────────────────────────────
+function renderRecent() {
+  const dyn = getDynamic().slice().reverse().slice(0, 5);
+  const el  = document.getElementById('recentList');
+  if (!dyn.length) {
+    el.innerHTML = `<div style="padding:20px 20px;color:var(--muted);font-size:13px;text-align:center;">No books added yet via admin. <a href="#" onclick="showSection('addBook',null)" style="color:var(--accent);">Add your first book →</a></div>`;
+    return;
+  }
+  el.innerHTML = dyn.map(b => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--border);">
+      <div style="width:32px;height:38px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${b.icon||'📚'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.title}</div>
+        <div style="font-size:12px;color:var(--muted);">${b.author} · ${b.cat}</div>
+      </div>
+      <span class="badge badge-dynamic">Admin</span>
+    </div>`).join('');
+}
+
+// ─── Category breakdown ───────────────────────────────────────────
+function renderCatBreakdown() {
+  const all = getAllBooks();
+  const el  = document.getElementById('catBreakdown');
+  el.innerHTML = CATS.map(cat => {
+    const count = all.filter(b => b.cat === cat).length;
+    const pct   = Math.round((count / all.length) * 100);
+    const col   = CAT_COLORS[cat] || '#888';
+    return `
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;font-weight:600;">${cat}</span>
+          <span style="font-size:12px;color:var(--muted);">${count} books</span>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;height:8px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${col};border-radius:4px;transition:width 0.5s;"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── Table ────────────────────────────────────────────────────────
+function renderTable() {
+  const q   = (document.getElementById('tableSearch')?.value || '').toLowerCase();
+  const cat = document.getElementById('tableCatFilter')?.value || '';
+  const src = document.getElementById('tableSrcFilter')?.value || '';
+  const staticIds = new Set(STATIC_BOOKS.map(b => b.id));
+  const all = getAllBooks().filter(b => {
+    if (cat && b.cat !== cat) return false;
+    if (src === 'static'  && !staticIds.has(b.id)) return false;
+    if (src === 'dynamic' && staticIds.has(b.id))  return false;
+    if (q && !b.title.toLowerCase().includes(q) && !b.author.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('booksTableBody');
+  if (!all.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6"><span class="empty-icon">📭</span>No books match your filter.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = all.map(b => {
+    const isStatic  = staticIds.has(b.id);
+    const catCol    = CAT_COLORS[b.cat] || '#888';
+    const badgeHtml = b.badge === 'hot' ? '<span class="badge badge-hot">HOT</span>' :
+                      b.badge === 'new' ? '<span class="badge badge-new">NEW</span>' : '';
+    return `
+      <tr>
+        <td>
+          <div class="td-book">
+            <div class="td-icon">${b.icon||'📚'}</div>
+            <div>
+              <div class="td-title">${b.title} ${badgeHtml}</div>
+              <div class="td-author">${b.author} · ${b.year}</div>
+            </div>
+          </div>
+        </td>
+        <td><span style="font-size:12px;font-weight:600;padding:2px 9px;border-radius:20px;background:${catCol}18;color:${catCol}">${b.cat}</span></td>
+        <td style="font-size:13px;color:var(--muted)">${b.fmt}</td>
+        <td style="font-size:13px;color:var(--accent)">★ ${b.rating}</td>
+        <td><span class="badge ${isStatic ? 'badge-static' : 'badge-dynamic'}">${isStatic ? 'Built-in' : 'Admin'}</span></td>
+        <td>
+          <div class="td-actions">
+            ${!isStatic ? `<button class="btn-edit" onclick="openEditModal(${b.id})">✏️ Edit</button>
+            <button class="btn-danger" onclick="confirmDelete(${b.id},'${b.title.replace(/'/g,"\\'")}')">🗑 Delete</button>` :
+            `<span style="font-size:12px;color:var(--muted)">Built-in</span>`}
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// ─── Form builder ────────────────────────────────────────────────
+function buildForm(containerId, book) {
+  const b = book || {};
+  const selectedIcon = b.icon || '📚';
+  const tagsStr = (b.tags || []).join(', ');
+  document.getElementById(containerId).innerHTML = `
+    <div class="form-grid">
+      <div class="form-field span2">
+        <label>Book Title *</label>
+        <input type="text" id="f_title" placeholder="e.g. Introduction to Machine Learning" value="${esc(b.title||'')}" />
+      </div>
+      <div class="form-field">
+        <label>Author *</label>
+        <input type="text" id="f_author" placeholder="Author name" value="${esc(b.author||'')}" />
+      </div>
+      <div class="form-field">
+        <label>Year</label>
+        <input type="number" id="f_year" placeholder="${new Date().getFullYear()}" min="1900" max="2099" value="${b.year||new Date().getFullYear()}" />
+      </div>
+      <div class="form-field">
+        <label>Category *</label>
+        <select id="f_cat">
+          ${CATS.map(c => `<option ${(b.cat||'Engineering')===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Format *</label>
+        <select id="f_fmt">
+          ${FMTS.map(f => `<option ${(b.fmt||'PDF')===f?'selected':''}>${f}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Rating (1–5)</label>
+        <input type="number" id="f_rating" min="1" max="5" step="0.1" value="${b.rating||4.5}" />
+      </div>
+      <div class="form-field">
+        <label>Pages</label>
+        <input type="number" id="f_pages" min="1" placeholder="e.g. 320" value="${b.pages||''}" />
+      </div>
+      <div class="form-field">
+        <label>Badge</label>
+        <select id="f_badge">
+          <option value="" ${!b.badge?'selected':''}>None</option>
+          <option value="new" ${b.badge==='new'?'selected':''}>🆕 New</option>
+          <option value="hot" ${b.badge==='hot'?'selected':''}>🔥 Hot</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Access</label>
+        <select id="f_free">
+          <option value="true"  ${b.free!==false?'selected':''}>🆓 Free</option>
+          <option value="false" ${b.free===false?'selected':''}>💎 Premium</option>
+        </select>
+      </div>
+      <div class="form-field span2">
+        <label>Description</label>
+        <textarea id="f_desc" placeholder="Brief description of the book...">${esc(b.desc||'')}</textarea>
+      </div>
+      <div class="form-field span2">
+        <label>Tags (comma-separated)</label>
+        <input type="text" id="f_tags" placeholder="e.g. calculus, analysis, proofs" value="${esc(tagsStr)}" />
+      </div>
+    </div>
+    <div class="form-divider"></div>
+    <div class="form-section-title">📎 Download & Access Links</div>
+    <div class="form-grid">
+      <div class="form-field span2">
+        <label>PDF File Upload</label>
+        <div class="pdf-upload-wrap" id="pdfUploadWrap">
+          <input type="file" id="f_pdf_file" accept=".pdf" style="display:none" onchange="handlePdfUpload(this)" />
+          ${b.pdfName ? `
+          <div class="pdf-preview" id="pdfPreview">
+            <span class="pdf-icon">📄</span>
+            <div class="pdf-info">
+              <div class="pdf-name" id="pdfName">${esc(b.pdfName||'')}</div>
+              <div class="pdf-size" id="pdfSize">${esc(b.pdfSize||'')}</div>
+            </div>
+            <button type="button" class="pdf-remove" onclick="removePdf()">✕</button>
+          </div>` : `
+          <div class="pdf-dropzone" id="pdfDropzone" onclick="document.getElementById('f_pdf_file').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handlePdfDrop(event)">
+            <div class="dropzone-icon">📄</div>
+            <div class="dropzone-text">Click to upload PDF <span>or drag & drop</span></div>
+            <div class="dropzone-hint">PDF files only · Max 50MB</div>
+          </div>`}
+        </div>
+        <input type="hidden" id="f_pdf_data" value="${b.pdfData ? '__has_pdf__' : ''}" />
+        <input type="hidden" id="f_pdf_name" value="${esc(b.pdfName||'')}" />
+        <input type="hidden" id="f_pdf_size" value="${esc(b.pdfSize||'')}" />
+        <input type="hidden" id="f_pdf_url" value="${esc(b.pdfUrl||'')}" />
+      </div>
+      <div class="form-field span2">
+        <label>External Download Link <span style="font-weight:400;text-transform:none;letter-spacing:0">(URL — used if no PDF uploaded)</span></label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;">🔗</span>
+          <input type="url" id="f_link" placeholder="https://example.com/book.pdf" value="${esc(b.link||'')}" style="padding-left:36px;" />
+        </div>
+      </div>
+      <div class="form-field span2">
+        <label>Read Online / Preview Link <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;">🌐</span>
+          <input type="url" id="f_readlink" placeholder="https://example.com/read-online" value="${esc(b.readLink||'')}" style="padding-left:36px;" />
+        </div>
+      </div>
+    </div>
+    <div class="form-divider"></div>
+    <div class="form-section-title">Book Icon</div>
+    <div class="icon-picker" id="iconPicker">
+      ${ICONS.map(ic => `<div class="icon-opt${ic===selectedIcon?' selected':''}" onclick="selectIcon(this,'${ic}')" data-icon="${ic}">${ic}</div>`).join('')}
+    </div>`;
+}
+
+function buildAddForm(container) {
+  buildForm(container, null);
+}
+
+function esc(s) {
+  return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function selectIcon(el, icon) {
+  el.closest('.icon-picker').querySelectorAll('.icon-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function getIconSelected(containerId) {
+  const sel = document.getElementById(containerId)?.querySelector('.icon-opt.selected');
+  return sel ? sel.dataset.icon : '📚';
+}
+
+function fieldValue(id, fallback = '') {
+  const el = document.getElementById(id);
+  return el ? el.value : fallback;
+}
+
+function setFieldValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = value || '';
+}
+
+function currentPdfUrl() {
+  return window._pdfUrlStore || fieldValue('f_pdf_url') || '';
+}
+
+function currentEditPdfUrl(existing = '') {
+  return window._editPdfUrlStore !== undefined
+    ? (window._editPdfUrlStore || '')
+    : (fieldValue('f_pdf_url') || existing || '');
+}
+
+// ─── Add Book ─────────────────────────────────────────────────────
+function submitAddBook() {
+  if (window._pdfUploadInProgress) { showToast('⏳','Please wait until the PDF upload finishes'); return; }
+  const title = document.getElementById('f_title').value.trim();
+  const author= document.getElementById('f_author').value.trim();
+  if (!title) { showToast('⚠️','Title is required'); document.getElementById('f_title').focus(); return; }
+  if (!author) { showToast('⚠️','Author is required'); document.getElementById('f_author').focus(); return; }
+
+  const dyn  = getDynamic();
+  const maxId= Math.max(...getAllBooks().map(b=>b.id), 100);
+  const book  = {
+    id:      maxId + 1,
+    title,
+    author,
+    cat:     fieldValue('f_cat'),
+    fmt:     fieldValue('f_fmt'),
+    rating:  parseFloat(fieldValue('f_rating')) || 4.5,
+    pages:   parseInt(fieldValue('f_pages')) || 0,
+    year:    parseInt(fieldValue('f_year')) || new Date().getFullYear(),
+    badge:   fieldValue('f_badge'),
+    free:    fieldValue('f_free') === 'true',
+    desc:    fieldValue('f_desc').trim(),
+    tags:    fieldValue('f_tags').split(',').map(t=>t.trim()).filter(Boolean),
+    icon:    getIconSelected('addFormContent'),
+    pdfData: window._pdfDataStore || null,
+    pdfUrl:  currentPdfUrl(),
+    pdfName: fieldValue('f_pdf_name') || '',
+    pdfSize: fieldValue('f_pdf_size') || '',
+    link:    fieldValue('f_link').trim(),
+    readLink:fieldValue('f_readlink').trim(),
+    source:  'admin',
+    addedAt: Date.now()
+  };
+  dyn.push(book);
+  saveDynamic(dyn);
+  updateStats();
+  renderTable();
+  renderRecent();
+  renderCatBreakdown();
+  resetAddForm();
+  showToast('✅', `"${book.title}" added to library!`);
+  setTimeout(() => showSection('books', null), 1200);
+}
+
+function resetAddForm() {
+  window._pdfDataStore = null;
+  window._pdfUrlStore  = null;
+  buildAddForm('addFormContent');
+}
+
+// ─── Edit ─────────────────────────────────────────────────────────
+function openEditModal(id) {
+  const book = getDynamic().find(b => b.id === id);
+  if (!book) { showToast('⚠️','Book not found'); return; }
+  editingId = id;
+  buildForm('editFormContent', book);
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  editingId = null;
+  window._editPdfDataStore = undefined;
+  window._editPdfUrlStore  = undefined;
+}
+
+function submitEditBook() {
+  if (!editingId) return;
+  const dyn = getDynamic();
+  const idx = dyn.findIndex(b => b.id === editingId);
+  if (idx === -1) { showToast('⚠️','Book not found'); return; }
+  const title = document.getElementById('f_title').value.trim();
+  const author= document.getElementById('f_author').value.trim();
+  if (!title || !author) { showToast('⚠️','Title & author required'); return; }
+  dyn[idx] = {
+    ...dyn[idx],
+    title,
+    author,
+    cat:    fieldValue('f_cat'),
+    fmt:    fieldValue('f_fmt'),
+    rating: parseFloat(fieldValue('f_rating'))||4.5,
+    pages:  parseInt(fieldValue('f_pages'))||0,
+    year:   parseInt(fieldValue('f_year'))||new Date().getFullYear(),
+    badge:  fieldValue('f_badge'),
+    free:   fieldValue('f_free')==='true',
+    desc:   fieldValue('f_desc').trim(),
+    tags:   fieldValue('f_tags').split(',').map(t=>t.trim()).filter(Boolean),
+    icon:   getIconSelected('editFormContent'),
+    pdfData: window._editPdfDataStore !== undefined
+               ? window._editPdfDataStore
+               : dyn[idx].pdfData,
+    pdfUrl:  window._editPdfUrlStore !== undefined
+               ? window._editPdfUrlStore
+               : (fieldValue('f_pdf_url') || dyn[idx].pdfUrl || ''),
+    pdfName: fieldValue('f_pdf_name') || dyn[idx].pdfName || '',
+    pdfSize: fieldValue('f_pdf_size') || dyn[idx].pdfSize || '',
+    link:    fieldValue('f_link').trim(),
+    readLink:fieldValue('f_readlink').trim(),
+  };
+  saveDynamic(dyn);
+  closeEditModal();
+  renderTable();
+  renderRecent();
+  updateStats();
+  renderCatBreakdown();
+  showToast('✅', 'Book updated!');
+}
+
+// ─── Delete ───────────────────────────────────────────────────────
+function confirmDelete(id, title) {
+  document.getElementById('confirmText').textContent = `Remove "${title}" from the library? This cannot be undone.`;
+  document.getElementById('confirmYes').onclick = () => { doDelete(id); closeConfirm(); };
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); }
+function doDelete(id) {
+  try { localStorage.removeItem('bh_pdf_' + id); } catch(e) {}
+  const dyn = getDynamic().filter(b => b.id !== id);
+  saveDynamic(dyn);
+  renderTable();
+  renderRecent();
+  updateStats();
+  renderCatBreakdown();
+  showToast('🗑️','Book deleted');
+}
+
+// ─── Toast ────────────────────────────────────────────────────────
+function showToast(icon, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent  = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── Logout ───────────────────────────────────────────────────────
+function logout() {
+  localStorage.removeItem('bh_admin_auth');
+  window.location.replace('login.html');
+}
+
+// ─── PDF Upload handlers ──────────────────────────────────────────
+async function uploadPdfToProjectFolder(file) {
+  const formData = new FormData();
+  formData.append('pdf', file);
+  const res = await fetch('/api/upload-pdf', { method: 'POST', body: formData });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Upload failed. Make sure you opened the site using npm start.');
+  return data;
+}
+
+function readPdfAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePdfUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') { showToast('⚠️','Please select a PDF file'); return; }
+  if (file.size > 52428800) { showToast('⚠️','File too large (max 50 MB)'); return; }
+
+  const isEdit = !!document.getElementById('editModal')?.classList.contains('open');
+  window._pdfUploadInProgress = true;
+  showToast('📤', `Uploading "${file.name}"...`);
+
+  try {
+    const uploaded = await uploadPdfToProjectFolder(file);
+    if (isEdit) {
+      window._editPdfUrlStore = uploaded.url;
+      window._editPdfDataStore = null;
+    } else {
+      window._pdfUrlStore = uploaded.url;
+      window._pdfDataStore = null;
+    }
+    setFieldValue('f_pdf_url', uploaded.url);
+    setFieldValue('f_pdf_name', uploaded.originalName || file.name);
+    setFieldValue('f_pdf_size', formatBytes(uploaded.size || file.size));
+    setFieldValue('f_pdf_data', '__has_pdf__');
+    renderPdfPreview(uploaded.originalName || file.name, formatBytes(uploaded.size || file.size));
+    showToast('✅', `PDF saved in uploads/books/`);
+  } catch (err) {
+    console.error(err);
+    if (isEdit) {
+      window._editPdfUrlStore = '';
+      window._editPdfDataStore = null;
+    } else {
+      window._pdfUrlStore = '';
+      window._pdfDataStore = null;
+    }
+    setFieldValue('f_pdf_url', '');
+    setFieldValue('f_pdf_name', '');
+    setFieldValue('f_pdf_size', '');
+    setFieldValue('f_pdf_data', '');
+    showToast('❌', 'PDF not saved. Run with npm start and open http://localhost:3000/admin/login.html');
+    input.value = '';
+  } finally {
+    window._pdfUploadInProgress = false;
+  }
+}
+
+function handlePdfDrop(e) {
+  e.preventDefault();
+  document.getElementById('pdfDropzone')?.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const fakeInput = { files: [file] };
+  handlePdfUpload(fakeInput);
+}
+
+function renderPdfPreview(name, size) {
+  const wrap = document.getElementById('pdfUploadWrap');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div class="pdf-preview" id="pdfPreview">
+      <span class="pdf-icon">📄</span>
+      <div class="pdf-info">
+        <div class="pdf-name" id="pdfName">${name}</div>
+        <div class="pdf-size" id="pdfSize">${size}</div>
+      </div>
+      <button type="button" class="pdf-remove" onclick="removePdf()">✕</button>
+    </div>`;
+}
+
+function removePdf() {
+  window._pdfDataStore     = null;
+  window._pdfUrlStore      = null;
+  window._editPdfDataStore = null;
+  window._editPdfUrlStore  = null;
+  setFieldValue('f_pdf_name', '');
+  setFieldValue('f_pdf_size', '');
+  setFieldValue('f_pdf_data', '');
+  setFieldValue('f_pdf_url', '');
+  const wrap = document.getElementById('pdfUploadWrap');
+  if (wrap) wrap.innerHTML = `
+    <input type="file" id="f_pdf_file" accept=".pdf" style="display:none" onchange="handlePdfUpload(this)" />
+    <div class="pdf-dropzone" id="pdfDropzone" onclick="document.getElementById('f_pdf_file').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handlePdfDrop(event)">
+      <div class="dropzone-icon">📄</div>
+      <div class="dropzone-text">Click to upload PDF <span>or drag & drop</span></div>
+      <div class="dropzone-hint">PDF files only · Max 50MB</div>
+    </div>`;
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024)       return bytes + ' B';
+  if (bytes < 1048576)    return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+// ─── Keyboard ─────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeEditModal(); closeConfirm(); }
+});
+</script>
+</body>
+</html>

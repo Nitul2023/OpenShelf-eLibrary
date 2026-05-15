@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Detail — BiblioHub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .pdf-viewer-wrap { margin-bottom: 32px; }
+    .pdf-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+      background: #1a1713; border-radius: 10px 10px 0 0; padding: 13px 18px;
+    }
+    .pdf-toolbar-left { display: flex; align-items: center; gap: 10px; }
+    .pdf-file-icon { font-size: 22px; }
+    .pdf-filename { color: #e5d9cc; font-size: 13px; font-weight: 600; }
+    .pdf-filesize { color: #7a6a58; font-size: 12px; margin-top: 1px; }
+    .pdf-toolbar-right { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pdf-tbtn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: none; font-family: var(--font-body);
+      transition: all 0.2s; text-decoration: none;
+    }
+    .pdf-tbtn-view { background: var(--accent); color: #fff; }
+    .pdf-tbtn-view:hover { background: var(--accent-hover); }
+    .pdf-tbtn-dl { background: rgba(255,255,255,0.10); color: #e5d9cc; }
+    .pdf-tbtn-dl:hover { background: rgba(255,255,255,0.18); color: #fff; }
+    .pdf-frame-box {
+      border: 1px solid #2e2419; border-top: none;
+      border-radius: 0 0 10px 10px; overflow: hidden; background: #222;
+    }
+    .pdf-frame { width: 100%; height: 720px; border: none; display: block; }
+    .state-box { text-align: center; padding: 80px 20px; color: var(--muted); }
+    .state-icon { font-size: 52px; margin-bottom: 16px; }
+    .state-box h2 {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      color: var(--text); margin-bottom: 8px;
+    }
+    .state-box p { font-size: 14px; line-height: 1.6; }
+    .state-box a { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body class="dir-body">
+
+  <div class="dir-header">
+    <a href="index.html" class="dir-back">&#8592; Back to Library</a>
+    <span class="dir-logo">BIBLIO<span>HUB</span></span>
+  </div>
+
+  <div id="root"></div>
+
+<script>
+var CAT_COLORS = {
+  Engineering: '#60a5fa',
+  Science:     '#4ade80',
+  Programming: '#a78bfa',
+  Mathematics: '#f87171'
+};
+
+// ── Static book data (mirrors app.js BOOKS_DATA) ──────────────────
+var STATIC_BOOKS = {
+  1:  { title:"Fundamentals of Electrical Engineering", author:"Charles Hayt", cat:"Engineering", fmt:"PDF", rating:4.8, pages:782, year:2023, badge:"hot", free:true, tags:["circuits","electronics","signals"], desc:"A comprehensive introduction to electrical engineering principles, covering circuit analysis, electromagnetism, and signal processing for undergraduate students.", icon:"⚡", accent:"#60a5fa" },
+  2:  { title:"Structural Analysis", author:"R.C. Hibbeler", cat:"Engineering", fmt:"PDF", rating:4.7, pages:622, year:2022, badge:"", free:true, tags:["structures","mechanics","beams"], desc:"Master the fundamentals of structural analysis with clear explanations, worked examples, and real-world applications in civil and structural engineering.", icon:"🏗️", accent:"#e8a44a" },
+  3:  { title:"Thermodynamics: An Engineering Approach", author:"Cengel & Boles", cat:"Engineering", fmt:"PDF", rating:4.9, pages:1008, year:2023, badge:"hot", free:true, tags:["heat","energy","systems"], desc:"The gold standard textbook for thermodynamics, featuring comprehensive coverage of energy systems, heat transfer, and entropy with engineering applications.", icon:"🌡️", accent:"#f87171" },
+  4:  { title:"Engineering Mechanics: Dynamics", author:"Meriam & Kraige", cat:"Engineering", fmt:"PDF", rating:4.5, pages:584, year:2021, badge:"", free:true, tags:["dynamics","motion","forces"], desc:"Rigorous treatment of dynamics and kinematics with emphasis on problem-solving methodology and practical engineering applications.", icon:"🔧", accent:"#4ade80" },
+  5:  { title:"Materials Science & Engineering", author:"Callister & Rethwisch", cat:"Engineering", fmt:"PDF", rating:4.6, pages:896, year:2022, badge:"new", free:true, tags:["materials","properties","metals"], desc:"Explores the relationships between microstructure and properties of engineering materials including metals, polymers, ceramics, and composites.", icon:"🔩", accent:"#a78bfa" },
+  6:  { title:"Fluid Mechanics", author:"Frank White", cat:"Engineering", fmt:"EPUB", rating:4.4, pages:776, year:2021, badge:"", free:true, tags:["fluids","flow","pressure"], desc:"Complete treatment of fluid statics and dynamics, turbomachinery, and compressible flow with engineering design perspective.", icon:"💧", accent:"#60a5fa" },
+  7:  { title:"Control Systems Engineering", author:"Norman Nise", cat:"Engineering", fmt:"PDF", rating:4.7, pages:944, year:2023, badge:"new", free:false, tags:["control","systems","feedback"], desc:"Comprehensive introduction to control systems theory with emphasis on design, analysis, and practical implementation using MATLAB.", icon:"🎛️", accent:"#4ade80" },
+  8:  { title:"A Brief History of Time", author:"Stephen Hawking", cat:"Science", fmt:"EPUB", rating:4.9, pages:212, year:2020, badge:"hot", free:true, tags:["cosmology","physics","universe"], desc:"The landmark book that made cosmology accessible to millions. Hawking's masterpiece covering black holes, the Big Bang, and the nature of time.", icon:"🌌", accent:"#60a5fa" },
+  9:  { title:"The Selfish Gene", author:"Richard Dawkins", cat:"Science", fmt:"PDF", rating:4.8, pages:360, year:2021, badge:"", free:true, tags:["evolution","genetics","biology"], desc:"Dawkins' revolutionary exploration of evolution from a gene-centric perspective that transformed our understanding of natural selection.", icon:"🧬", accent:"#4ade80" },
+  10: { title:"Cosmos", author:"Carl Sagan", cat:"Science", fmt:"EPUB", rating:4.9, pages:365, year:2020, badge:"hot", free:true, tags:["astronomy","universe","history"], desc:"Sagan's timeless journey through the universe, exploring the nature of science, the history of astronomy, and humanity's place in the cosmos.", icon:"🪐", accent:"#a78bfa" },
+  11: { title:"The Double Helix", author:"James Watson", cat:"Science", fmt:"PDF", rating:4.6, pages:226, year:2021, badge:"", free:true, tags:["DNA","biology","history"], desc:"A personal and controversial account of the discovery of the structure of DNA — one of the most important scientific breakthroughs of the 20th century.", icon:"🔬", accent:"#f87171" },
+  12: { title:"Feynman Lectures on Physics", author:"Richard Feynman", cat:"Science", fmt:"Article", rating:5.0, pages:1552, year:2022, badge:"hot", free:true, tags:["physics","quantum","electromagnetism"], desc:"The legendary lecture series from Nobel laureate Feynman — the definitive introduction to physics, freely available online.", icon:"⚛️", accent:"#e8a44a" },
+  13: { title:"Six Easy Pieces", author:"Richard Feynman", cat:"Science", fmt:"EPUB", rating:4.7, pages:176, year:2022, badge:"new", free:false, tags:["physics","popular science","atoms"], desc:"The most accessible introductions to physics from the greatest teacher — six chapters from the Feynman Lectures for the general reader.", icon:"🔭", accent:"#60a5fa" },
+  14: { title:"Clean Code", author:"Robert C. Martin", cat:"Programming", fmt:"PDF", rating:4.8, pages:431, year:2023, badge:"hot", free:true, tags:["best practices","refactoring","craftsmanship"], desc:"A handbook of agile software craftsmanship. The essential guide to writing clean, readable, maintainable code that professional developers swear by.", icon:"💻", accent:"#e8e8e8" },
+  15: { title:"The Pragmatic Programmer", author:"Hunt & Thomas", cat:"Programming", fmt:"PDF", rating:4.9, pages:352, year:2023, badge:"", free:true, tags:["career","philosophy","tools"], desc:"Your journey to mastery in software development. Timeless advice on career development, tools, techniques, and the philosophy of pragmatic programming.", icon:"🛠️", accent:"#4ade80" },
+  16: { title:"Design Patterns", author:"Gang of Four", cat:"Programming", fmt:"EPUB", rating:4.7, pages:395, year:2020, badge:"", free:true, tags:["patterns","OOP","architecture"], desc:"The legendary catalog of reusable object-oriented design patterns that remains essential reading for every serious software engineer.", icon:"🏛️", accent:"#a78bfa" },
+  17: { title:"Introduction to Algorithms", author:"CLRS", cat:"Programming", fmt:"PDF", rating:4.8, pages:1312, year:2022, badge:"hot", free:true, tags:["algorithms","data structures","theory"], desc:"The definitive textbook on algorithms — comprehensive, rigorous, and authoritative. Known universally as 'CLRS', an essential reference.", icon:"📊", accent:"#60a5fa" },
+  18: { title:"You Don't Know JS", author:"Kyle Simpson", cat:"Programming", fmt:"Article", rating:4.6, pages:278, year:2023, badge:"new", free:true, tags:["JavaScript","web","async"], desc:"A series that dives deep into the core mechanisms of the JavaScript language, covering scope, closures, types, syntax, and async patterns.", icon:"🌐", accent:"#e8a44a" },
+  19: { title:"Python Crash Course", author:"Eric Matthes", cat:"Programming", fmt:"PDF", rating:4.5, pages:544, year:2023, badge:"new", free:false, tags:["Python","beginner","projects"], desc:"A hands-on, project-based introduction to programming using Python. Build games, data visualizations, and web applications.", icon:"🐍", accent:"#4ade80" },
+  20: { title:"Calculus: Early Transcendentals", author:"James Stewart", cat:"Mathematics", fmt:"PDF", rating:4.8, pages:1368, year:2023, badge:"", free:true, tags:["calculus","limits","integrals"], desc:"The most widely used calculus textbook in the world, known for its clarity of exposition and excellent problem sets.", icon:"∫", accent:"#a78bfa" },
+  21: { title:"Linear Algebra Done Right", author:"Sheldon Axler", cat:"Mathematics", fmt:"PDF", rating:4.9, pages:340, year:2022, badge:"hot", free:true, tags:["linear algebra","vectors","matrices"], desc:"A fresh approach to linear algebra that focuses on linear maps rather than matrix computations, with elegant proofs and insights.", icon:"📐", accent:"#e8a44a" },
+  22: { title:"Introduction to Probability", author:"Bertsekas & Tsitsiklis", cat:"Mathematics", fmt:"EPUB", rating:4.7, pages:544, year:2022, badge:"", free:true, tags:["probability","statistics","random"], desc:"A rigorous yet accessible introduction to probability theory and its applications in engineering, science, and computer science.", icon:"🎲", accent:"#4ade80" },
+  23: { title:"Number Theory", author:"Niven, Zuckerman & Montgomery", cat:"Mathematics", fmt:"PDF", rating:4.6, pages:544, year:2021, badge:"", free:true, tags:["number theory","primes","proofs"], desc:"A classic introduction to number theory covering divisibility, congruences, quadratic residues, Diophantine equations, and more.", icon:"🔢", accent:"#f87171" },
+  24: { title:"Graph Theory", author:"Diestel", cat:"Mathematics", fmt:"PDF", rating:4.8, pages:428, year:2023, badge:"new", free:true, tags:["graphs","algorithms","combinatorics"], desc:"A comprehensive and elegant treatment of graph theory from fundamentals to advanced topics, freely available online.", icon:"🕸️", accent:"#60a5fa" }
+};
+
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+function mk(tag, className) {
+  var e = document.createElement(tag);
+  if (className) e.className = className;
+  return e;
+}
+
+function txt(tag, className, content) {
+  var e = mk(tag, className);
+  e.textContent = content || '';
+  return e;
+}
+
+function isValidPdfData(data) {
+  // Must be a proper data URI for PDF or a normal http(s) URL
+  if (!data || typeof data !== 'string') return false;
+  return data.startsWith('data:application/pdf;base64,') ||
+         data.startsWith('data:application/octet-stream;base64,') ||
+         data.startsWith('http://') ||
+         data.startsWith('https://');
+}
+
+function loadBook(id) {
+  // 1. Try localStorage (admin-added books)
+  try {
+    var list = JSON.parse(localStorage.getItem('bh_books') || '[]');
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].id) === String(id)) {
+        var book = list[i];
+        if (book.hasPdf) {
+          try {
+            var raw = localStorage.getItem('bh_pdf_' + id) || null;
+            book.pdfData = isValidPdfData(raw) ? raw : null;
+          } catch(e) { book.pdfData = null; }
+        }
+        return book;
+      }
+    }
+  } catch(e) {}
+
+  // 2. Fall back to static built-in books (IDs 1–24)
+  var numId = Number(id);
+  if (STATIC_BOOKS[numId]) {
+    return Object.assign({ id: numId, pdfData: null, link: '', readLink: '' }, STATIC_BOOKS[numId]);
+  }
+
+  return null;
+}
+
+function showError(title, msg) {
+  var root = document.getElementById('root');
+  var wrap = mk('div', 'dir-content');
+  var box  = mk('div', 'state-box');
+  box.appendChild(txt('div', 'state-icon', '📭'));
+  box.appendChild(txt('h2', '', title));
+  box.appendChild(txt('p', '', msg));
+  var br = mk('br'); box.appendChild(br);
+  var a = mk('a'); a.href = 'index.html'; a.textContent = '← Back to Library';
+  box.appendChild(a);
+  wrap.appendChild(box);
+  root.appendChild(wrap);
+}
+
+function addStat(container, val, label, color) {
+  var s = mk('div', 'dir-hero-stat');
+  var strong = mk('strong');
+  strong.textContent = val;
+  if (color) strong.style.color = color;
+  s.appendChild(strong);
+  s.appendChild(document.createTextNode(label));
+  container.appendChild(s);
+}
+
+function addDownloadRow(container, icon, name, meta, href, btnText, isSecondary, isDownload, dlName) {
+  var row  = mk('div', 'dir-download-row');
+  var info = mk('div', 'dir-dl-info');
+  var n    = mk('div', 'dir-dl-name'); n.textContent = icon + ' ' + name;
+  var m    = mk('div', 'dir-dl-meta'); m.textContent = meta;
+  info.appendChild(n);
+  info.appendChild(m);
+  row.appendChild(info);
+
+  var btn = mk('a', isSecondary ? 'dir-dl-btn secondary' : 'dir-dl-btn');
+  btn.textContent = btnText;
+  btn.href = href;
+  if (isDownload && dlName) {
+    btn.download = dlName;
+  } else {
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+  }
+  row.appendChild(btn);
+  container.appendChild(row);
+}
+
+function render() {
+  var id   = getParam('id');
+  var root = document.getElementById('root');
+
+  if (!id) { showError('No Book ID', 'No book ID was provided in the URL.'); return; }
+
+  var b = loadBook(id);
+  if (!b) { showError('Book Not Found', 'This book could not be found. It may have been deleted or the link is wrong.'); return; }
+
+  document.title = b.title + ' — BiblioHub';
+
+  var catCol = CAT_COLORS[b.cat] || '#888';
+
+  /* ── HERO ── */
+  var hero = mk('div', 'dir-hero');
+
+  var coverIcon = mk('div', 'dir-cover-icon');
+  coverIcon.textContent = b.icon || '📚';
+  hero.appendChild(coverIcon);
+
+  var heroInfo = mk('div', 'dir-hero-info');
+
+  if (b.badge === 'hot' || b.badge === 'new') {
+    var badge = mk('span', 'dir-badge');
+    badge.textContent = b.badge === 'hot' ? '🔥 HOT' : '🆕 NEW';
+    badge.style.background = b.badge === 'hot' ? '#e05a00' : '#1a7a40';
+    badge.style.color = '#fff';
+    heroInfo.appendChild(badge);
+  }
+
+  heroInfo.appendChild(txt('div', 'dir-hero-title',  b.title));
+  heroInfo.appendChild(txt('div', 'dir-hero-author', 'by ' + b.author));
+
+  var stats = mk('div', 'dir-hero-stats');
+  addStat(stats, '★ ' + b.rating, 'Rating');
+  if (b.pages) addStat(stats, Number(b.pages).toLocaleString(), 'Pages');
+  addStat(stats, String(b.year || ''), 'Edition');
+  addStat(stats, b.fmt, 'Format', catCol);
+  addStat(stats, b.free ? 'Free' : 'Premium', 'Access', b.free ? '#4ade80' : '#f87171');
+  if (b.pdfData) addStat(stats, '✓', 'PDF Ready', '#fbbf24');
+  heroInfo.appendChild(stats);
+
+  hero.appendChild(heroInfo);
+  root.appendChild(hero);
+
+  /* ── CONTENT ── */
+  var content = mk('div', 'dir-content');
+
+  /* About */
+  content.appendChild(txt('div', 'dir-section-title', 'About This Book'));
+  content.appendChild(txt('div', 'dir-desc', b.desc || 'No description provided.'));
+
+  /* Tags */
+  var tagsWrap = mk('div', 'dir-tags');
+  (b.tags || []).forEach(function(t) {
+    var tag = txt('span', 'dir-tag', t);
+    tagsWrap.appendChild(tag);
+  });
+  var catTag = txt('span', 'dir-tag', b.cat);
+  catTag.style.cssText = 'background:' + catCol + '15;color:' + catCol + ';border-color:' + catCol + '30';
+  tagsWrap.appendChild(catTag);
+  var accTag = txt('span', 'dir-tag', b.free ? 'Free Access' : 'Premium');
+  accTag.style.cssText = b.free
+    ? 'background:#4ade8015;color:#4ade80;border-color:#4ade8030'
+    : 'background:#f8717115;color:#f87171;border-color:#f8717130';
+  tagsWrap.appendChild(accTag);
+  content.appendChild(tagsWrap);
+
+  /* Downloads */
+  content.appendChild(txt('div', 'dir-section-title', 'Available Downloads'));
+  var dlSection = mk('div', 'dir-download-section');
+  var hasDl = false;
+
+  if (b.pdfData) {
+    var fname = b.pdfName || b.title + '.pdf';
+    var metaParts = ['Uploaded file'];
+    if (b.pdfSize) metaParts.push(b.pdfSize);
+    if (b.pages)   metaParts.push(b.pages + ' pages');
+    addDownloadRow(dlSection, '📄', b.title + ' — Full PDF', metaParts.join(' · '),
+      b.pdfData, '⬇ Download PDF', false, true, fname);
+    hasDl = true;
+  }
+  if (b.link) {
+    addDownloadRow(dlSection, '🔗', 'External Download Link', b.link,
+      b.link, 'Open →', false, false);
+    hasDl = true;
+  }
+  if (b.readLink) {
+    addDownloadRow(dlSection, '🌐', 'Read Online / Preview', b.readLink,
+      b.readLink, 'Read →', true, false);
+    hasDl = true;
+  }
+  if (!hasDl) {
+    var noDl = mk('div');
+    noDl.style.cssText = 'padding:20px;color:var(--muted);font-size:13px;text-align:center;';
+    noDl.textContent = 'No download links or PDF have been provided for this book yet.';
+    dlSection.appendChild(noDl);
+  }
+  content.appendChild(dlSection);
+
+  /* PDF Viewer */
+  if (b.pdfData) {
+    content.appendChild(txt('div', 'dir-section-title', '📄 PDF Viewer'));
+
+    var viewerWrap = mk('div', 'pdf-viewer-wrap');
+    var toolbar    = mk('div', 'pdf-toolbar');
+    var tbLeft     = mk('div', 'pdf-toolbar-left');
+
+    var fIcon = mk('span', 'pdf-file-icon'); fIcon.textContent = '📄';
+    var fInfo = mk('div');
+    fInfo.appendChild(txt('div', 'pdf-filename', b.pdfName || b.title + '.pdf'));
+    if (b.pdfSize) fInfo.appendChild(txt('div', 'pdf-filesize', b.pdfSize));
+    tbLeft.appendChild(fIcon);
+    tbLeft.appendChild(fInfo);
+    toolbar.appendChild(tbLeft);
+
+    var tbRight = mk('div', 'pdf-toolbar-right');
+
+    var fsBtn = mk('button', 'pdf-tbtn pdf-tbtn-view');
+    fsBtn.textContent = '↗ Full Screen';
+    fsBtn.onclick = openFullscreen;
+    tbRight.appendChild(fsBtn);
+
+    var dlBtn = mk('a', 'pdf-tbtn pdf-tbtn-dl');
+    dlBtn.textContent = '⬇ Download';
+    dlBtn.href = b.pdfData;
+    dlBtn.download = b.pdfName || b.title + '.pdf';
+    tbRight.appendChild(dlBtn);
+
+    toolbar.appendChild(tbRight);
+    viewerWrap.appendChild(toolbar);
+
+    var frameBox = mk('div', 'pdf-frame-box');
+    var iframe   = mk('iframe', 'pdf-frame');
+    iframe.src   = b.pdfData;
+    iframe.title = b.title;
+    frameBox.appendChild(iframe);
+    viewerWrap.appendChild(frameBox);
+    content.appendChild(viewerWrap);
+
+    window.__pdfSrc  = b.pdfData;
+    window.__pdfName = b.pdfName || b.title + '.pdf';
+  }
+
+  /* Related books */
+  try {
+    var dynBooks = JSON.parse(localStorage.getItem('bh_books') || '[]');
+    var staticArr = Object.keys(STATIC_BOOKS).map(function(k) {
+      return Object.assign({ id: Number(k) }, STATIC_BOOKS[k]);
+    });
+    var all = staticArr.concat(dynBooks);
+    var related = all.filter(function(r) { return r.cat === b.cat && String(r.id) !== String(id); }).slice(0, 4);
+    if (related.length) {
+      var relWrap  = mk('div', 'dir-related');
+      relWrap.appendChild(txt('div', 'dir-section-title', 'More in ' + b.cat));
+      var relGrid  = mk('div', 'dir-related-grid');
+      related.forEach(function(r) {
+        var card = mk('a', 'dir-related-card');
+        card.href = 'book-detail.html?id=' + r.id;
+        card.appendChild(txt('div', 'dir-related-icon',  r.icon || '📚'));
+        card.appendChild(txt('div', 'dir-related-title', r.title));
+        card.appendChild(txt('div', 'dir-related-author', r.author));
+        relGrid.appendChild(card);
+      });
+      relWrap.appendChild(relGrid);
+      content.appendChild(relWrap);
+    }
+  } catch(e) {}
+
+  /* Back link */
+  var backWrap = mk('div');
+  backWrap.style.cssText = 'text-align:center;padding:24px 0;color:var(--muted);font-size:13px;';
+  var backLink = mk('a');
+  backLink.href = 'index.html';
+  backLink.textContent = '← Return to Library';
+  backLink.style.cssText = 'color:var(--accent);font-weight:600;';
+  backWrap.appendChild(backLink);
+  content.appendChild(backWrap);
+
+  root.appendChild(content);
+}
+
+function openFullscreen() {
+  if (!window.__pdfSrc) return;
+  var w = window.open('', '_blank');
+  w.document.open();
+  w.document.write('<!DOCTYPE html><html><head><title>');
+  w.document.write(window.__pdfName || 'PDF');
+  w.document.write('</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%}iframe{width:100%;height:100%;border:none;display:block}</style></head><body>');
+  w.document.write('<iframe src="');
+  w.document.write(window.__pdfSrc);
+  w.document.write('"></iframe></body></html>');
+  w.document.close();
+}
+
+render();
+</script>
+</body>
+</html>

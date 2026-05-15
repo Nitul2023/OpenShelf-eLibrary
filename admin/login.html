@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — OpenShelf</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f4f1ec;
+      --surface: #ffffff;
+      --surface2: #f0ede7;
+      --border: #ddd8d0;
+      --text: #1a1713;
+      --muted: #7a7060;
+      --accent: #a0620a;
+      --accent-hover: #7d4d08;
+      --accent-glow: rgba(160,98,10,0.12);
+      --danger: #c0392b;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body: 'DM Sans', sans-serif;
+      --radius: 14px;
+      --shadow: 0 8px 40px rgba(0,0,0,0.12);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative background blobs */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -120px; left: -120px;
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(160,98,10,0.10) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -100px; right: -100px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(160,98,10,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .login-wrap {
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Brand header above card */
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .brand-logo {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+    .brand-logo span { color: var(--accent); }
+    .brand-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 36px 36px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      margin-bottom: 28px;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .card-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* Form */
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .field input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+    .field input::placeholder { color: #b0a898; }
+
+    .pw-wrap { position: relative; }
+    .pw-toggle {
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--muted);
+      padding: 2px;
+      line-height: 1;
+    }
+
+    /* Error */
+    .error-msg {
+      background: #fff0ef;
+      border: 1px solid #f5c6c3;
+      color: var(--danger);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .error-msg.show { display: flex; }
+
+    /* Submit */
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      margin-top: 4px;
+    }
+    .btn-login:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Hint */
+    .hint {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      margin-left: -36px;
+      margin-right: -36px;
+      margin-bottom: -36px;
+      padding: 16px 20px;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+    .hint-icon { font-size: 18px; flex-shrink: 0; }
+    .hint-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .hint-text strong { color: var(--text); }
+
+    /* Back link */
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .back-link a { color: var(--accent); font-weight: 500; }
+    .back-link a:hover { text-decoration: underline; }
+
+    /* Shake animation */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-5px); }
+      80%      { transform: translateX(5px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+
+    <div class="brand">
+      <div class="brand-logo">Open<span>Shelf</span></div>
+      <div class="brand-sub">ADMIN PORTAL</div>
+    </div>
+
+    <div class="card" id="loginCard">
+      <div class="card-header">
+        <div class="card-title">Welcome back</div>
+        <div class="card-sub">Sign in to manage the library</div>
+      </div>
+
+      <div class="error-msg" id="errorMsg">
+        <span>⚠️</span>
+        <span id="errorText">Invalid username or password.</span>
+      </div>
+
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="admin" autocomplete="username" />
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+          <button class="pw-toggle" onclick="togglePw()" id="pwToggle" type="button">👁</button>
+        </div>
+      </div>
+
+      <button class="btn-login" id="loginBtn" onclick="doLogin()">Sign In</button>
+
+      <div class="hint">
+        <span class="hint-icon">🔑</span>
+        <div class="hint-text">Demo credentials — Username: <strong>admin</strong> &nbsp;·&nbsp; Password: <strong>admin123</strong></div>
+      </div>
+    </div>
+
+    <div class="back-link">
+      <a href="../index.html">← Back to Library</a>
+    </div>
+
+  </div>
+
+  <script>
+    // Redirect if already logged in
+    if (localStorage.getItem('bh_admin_auth') === 'true') {
+      window.location.replace('dashboard.html');
+    }
+
+    // Press Enter to login
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    function togglePw() {
+      const inp = document.getElementById('password');
+      const btn = document.getElementById('pwToggle');
+      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+      else { inp.type = 'password'; btn.textContent = '👁'; }
+    }
+
+    function doLogin() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+      const btn  = document.getElementById('loginBtn');
+      const err  = document.getElementById('errorMsg');
+      const card = document.getElementById('loginCard');
+
+      // Simple hardcoded credentials (for demo)
+      if (user === 'admin' && pass === 'admin123') {
+        btn.disabled = true;
+        btn.textContent = 'Signing in…';
+        err.classList.remove('show');
+        localStorage.setItem('bh_admin_auth', 'true');
+        setTimeout(() => window.location.replace('dashboard.html'), 600);
+      } else {
+        err.classList.add('show');
+        document.getElementById('errorText').textContent =
+          !user && !pass ? 'Please enter your credentials.' :
+          !user ? 'Username is required.' :
+          !pass ? 'Password is required.' :
+          'Invalid username or password.';
+        card.classList.remove('shake');
+        void card.offsetWidth;
+        card.classList.add('shake');
+        document.getElementById('password').value = '';
+      }
+    }
+  </script>
+</body>
+</html>

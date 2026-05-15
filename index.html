@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenShelf — eLibrary</title>
+    <link rel="icon" type="image/x-icon" href="./admin/img.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .logo {
+      display: flex;
+      align-items: center;
+      /* gap: 10px; Space between the logo image and the text  */
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .logo-img {
+      height: 40px; /* Adjust this height to fit your navbar thickness */
+      width: auto;  /* Maintains aspect ratio */
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+<nav class="navbar">
+  <a class="logo" href="index.html">
+    <!-- Replace 'logo.png' with your actual image path -->
+    <img src="./admin/img.jpg " alt="OpenShelf Logo" class="logo-img">Open<span>Shelf</span>
+  </a>
+  
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="Search books, authors, topics..." oninput="filterBooks()" />
+  </div>
+
+  <div class="nav-actions">
+    <button class="nav-btn active-nav" onclick="switchView('library')">📚 Library</button>
+    <button class="nav-btn" id="bmBtn" onclick="switchView('bookmarks')">
+      🔖 Bookmarks <span class="bookmark-count" id="bmCount">0</span>
+    </button>
+    <a href="admin/login.html" class="nav-btn" style="color:var(--accent);border-color:rgba(160,98,10,0.3);">⚙️ Admin</a>
+  </div>
+</nav>
+
+  <!-- MAIN LAYOUT -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Categories</div>
+        <div id="catFilters">
+          <div class="filter-item active" onclick="setCategory('All')" data-cat="All">
+            <div class="fi-left"><div class="fi-dot" style="background:var(--accent)"></div><span class="fi-label">All Books</span></div>
+            <span class="fi-count">24</span>
+          </div>
+          <div class="filter-item" onclick="setCategory('Engineering')" data-cat="Engineering">
+            <div class="fi-left"><div class="fi-dot" style="background:#60a5fa"></div><span class="fi-label">Engineering</span></div>
+            <span class="fi-count">7</span>
+          </div>
+          <div class="filter-item" onclick="setCategory('Science')" data-cat="Science">
+            <div class="fi-left"><div class="fi-dot" style="background:#4ade80"></div><span class="fi-label">Science</span></div>
+            <span class="fi-count">6</span>
+          </div>
+          <div class="filter-item" onclick="setCategory('Programming')" data-cat="Programming">
+            <div class="fi-left"><div class="fi-dot" style="background:#a78bfa"></div><span class="fi-label">Programming</span></div>
+            <span class="fi-count">6</span>
+          </div>
+          <div class="filter-item" onclick="setCategory('Mathematics')" data-cat="Mathematics">
+            <div class="fi-left"><div class="fi-dot" style="background:#f87171"></div><span class="fi-label">Mathematics</span></div>
+            <span class="fi-count">5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Quick Filters</div>
+        <div class="filter-item" data-quick="new" onclick="toggleQuick('new',this)">
+          <div class="fi-left"><span>🆕</span><span class="fi-label">New Arrivals</span></div>
+        </div>
+        <div class="filter-item" data-quick="hot" onclick="toggleQuick('hot',this)">
+          <div class="fi-left"><span>🔥</span><span class="fi-label">Trending</span></div>
+        </div>
+        <div class="filter-item" data-quick="free" onclick="toggleQuick('free',this)">
+          <div class="fi-left"><span>🆓</span><span class="fi-label">Free Access</span></div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+      <!-- LIBRARY VIEW -->
+      <div class="view-section active" id="libraryView">
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-card">
+            <div class="sc-val sc-accent">24</div>
+            <div class="sc-key">Total Resources</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-val sc-accent" id="statFiltered">24</div>
+            <div class="sc-key">Showing</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-val sc-accent" id="statBm">0</div>
+            <div class="sc-key">Bookmarked</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-val sc-accent">Free</div>
+            <div class="sc-key">Access</div>
+          </div>
+        </div>
+
+        <!-- Category Pills -->
+        <div class="cat-pills">
+          <span class="pill active" onclick="setPill(this,'All')">All</span>
+          <span class="pill" onclick="setPill(this,'Engineering')">⚙️ Engineering</span>
+          <span class="pill" onclick="setPill(this,'Science')">🔬 Science</span>
+          <span class="pill" onclick="setPill(this,'Programming')">💻 Programming</span>
+          <span class="pill" onclick="setPill(this,'Mathematics')">📐 Mathematics</span>
+        </div>
+
+        <!-- Header -->
+        <div class="main-header">
+          <div class="results-info"><strong id="resultsCount">24</strong> resources found</div>
+          <div class="header-controls">
+            <div class="sort-wrap">
+              <span class="sort-label">Sort:</span>
+              <select class="sort-select" onchange="sortBooks(this.value)">
+                <option value="default">Featured</option>
+                <option value="rating">Top Rated</option>
+                <option value="title">A–Z</option>
+                <option value="newest">Newest</option>
+              </select>
+            </div>
+            <div class="view-toggle">
+              <button class="view-btn active" id="gridBtn" onclick="setView('grid')" title="Grid">⊞</button>
+              <button class="view-btn" id="listBtn" onclick="setView('list')" title="List">☰</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Book Grid — All 24 books hard-coded in HTML -->
+        <div class="book-grid" id="bookGrid">
+
+          <!-- 1 -->
+          <div class="book-card" data-id="1" data-cat="Engineering" data-fmt="PDF" data-rating="4.8" data-badge="hot" data-free="true" data-year="2023" data-tags="circuits electronics signals" onclick="openModal(1)">
+            <div class="badge-hot">HOT</div>
+            <button class="bm-btn" onclick="toggleBookmark(1,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">⚡</div>
+                <div class="cover-title">Fundamentals of Electrical Engineering</div>
+                <div class="cover-author">Charles Hayt</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Fundamentals of Electrical Engineering</div>
+              <div class="book-author">Charles Hayt</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#60a5fa18;color:#60a5fa">Engineering</span>
+                <span class="book-rating">★ 4.8</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=1" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=1" class="btn-download" onclick="handleDownload(1,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2 -->
+          <div class="book-card" data-id="2" data-cat="Engineering" data-fmt="PDF" data-rating="4.7" data-badge="" data-free="true" data-year="2022" data-tags="structures mechanics beams" onclick="openModal(2)">
+            <button class="bm-btn" onclick="toggleBookmark(2,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🏗️</div>
+                <div class="cover-title">Structural Analysis</div>
+                <div class="cover-author">R.C. Hibbeler</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Structural Analysis</div>
+              <div class="book-author">R.C. Hibbeler</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#60a5fa18;color:#60a5fa">Engineering</span>
+                <span class="book-rating">★ 4.7</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=2" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=2" class="btn-download" onclick="handleDownload(2,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3 -->
+          <div class="book-card" data-id="3" data-cat="Engineering" data-fmt="PDF" data-rating="4.9" data-badge="hot" data-free="true" data-year="2023" data-tags="heat energy systems" onclick="openModal(3)">
+            <div class="badge-hot">HOT</div>
+            <button class="bm-btn" onclick="toggleBookmark(3,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🌡️</div>
+                <div class="cover-title">Thermodynamics: An Engineering Approach</div>
+                <div class="cover-author">Cengel & Boles</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Thermodynamics: An Engineering Approach</div>
+              <div class="book-author">Cengel & Boles</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#60a5fa18;color:#60a5fa">Engineering</span>
+                <span class="book-rating">★ 4.9</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=3" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=3" class="btn-download" onclick="handleDownload(3,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 -->
+          <div class="book-card" data-id="4" data-cat="Engineering" data-fmt="PDF" data-rating="4.5" data-badge="" data-free="true" data-year="2021" data-tags="dynamics motion forces" onclick="openModal(4)">
+            <button class="bm-btn" onclick="toggleBookmark(4,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🔧</div>
+                <div class="cover-title">Engineering Mechanics: Dynamics</div>
+                <div class="cover-author">Meriam & Kraige</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Engineering Mechanics: Dynamics</div>
+              <div class="book-author">Meriam & Kraige</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#60a5fa18;color:#60a5fa">Engineering</span>
+                <span class="book-rating">★ 4.5</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=4" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=4" class="btn-download" onclick="handleDownload(4,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5 -->
+          <div class="book-card" data-id="5" data-cat="Engineering" data-fmt="PDF" data-rating="4.6" data-badge="new" data-free="true" data-year="2022" data-tags="materials properties metals" onclick="openModal(5)">
+            <div class="badge-new">NEW</div>
+            <button class="bm-btn" onclick="toggleBookmark(5,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🔩</div>
+                <div class="cover-title">Materials Science & Engineering</div>
+                <div class="cover-author">Callister & Rethwisch</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Materials Science & Engineering</div>
+              <div class="book-author">Callister & Rethwisch</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#60a5fa18;color:#60a5fa">Engineering</span>
+                <span class="book-rating">★ 4.6</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=5" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=5" class="btn-download" onclick="handleDownload(5,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 -->
+          <div class="book-card" data-id="6" data-cat="Engineering" data-fmt="EPUB" data-rating="4.4" data-badge="" data-free="true" data-year="2021" data-tags="fluids flow pressure" onclick="openModal(6)">
+            <button class="bm-btn" onclick="toggleBookmark(6,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">💧</div>
+                <div class="cover-title">Fluid Mechanics</div>
+                <div class="cover-author">Frank White</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Fluid Mechanics</div>
+              <div class="book-author">Frank White</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#60a5fa18;color:#60a5fa">Engineering</span>
+                <span class="book-rating">★ 4.4</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=6" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=6" class="btn-download" onclick="handleDownload(6,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7 -->
+          <div class="book-card" data-id="7" data-cat="Engineering" data-fmt="PDF" data-rating="4.7" data-badge="new" data-free="false" data-year="2023" data-tags="control systems feedback" onclick="openModal(7)">
+            <div class="badge-new">NEW</div>
+            <button class="bm-btn" onclick="toggleBookmark(7,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🎛️</div>
+                <div class="cover-title">Control Systems Engineering</div>
+                <div class="cover-author">Norman Nise</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Control Systems Engineering</div>
+              <div class="book-author">Norman Nise</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#60a5fa18;color:#60a5fa">Engineering</span>
+                <span class="book-rating">★ 4.7</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=7" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=7" class="btn-download" onclick="handleDownload(7,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8 -->
+          <div class="book-card" data-id="8" data-cat="Science" data-fmt="EPUB" data-rating="4.9" data-badge="hot" data-free="true" data-year="2020" data-tags="cosmology physics universe" onclick="openModal(8)">
+            <div class="badge-hot">HOT</div>
+            <button class="bm-btn" onclick="toggleBookmark(8,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🌌</div>
+                <div class="cover-title">A Brief History of Time</div>
+                <div class="cover-author">Stephen Hawking</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">A Brief History of Time</div>
+              <div class="book-author">Stephen Hawking</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#4ade8018;color:#4ade80">Science</span>
+                <span class="book-rating">★ 4.9</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=8" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=8" class="btn-download" onclick="handleDownload(8,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9 -->
+          <div class="book-card" data-id="9" data-cat="Science" data-fmt="PDF" data-rating="4.8" data-badge="" data-free="true" data-year="2021" data-tags="evolution genetics biology" onclick="openModal(9)">
+            <button class="bm-btn" onclick="toggleBookmark(9,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🧬</div>
+                <div class="cover-title">The Selfish Gene</div>
+                <div class="cover-author">Richard Dawkins</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">The Selfish Gene</div>
+              <div class="book-author">Richard Dawkins</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#4ade8018;color:#4ade80">Science</span>
+                <span class="book-rating">★ 4.8</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=9" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=9" class="btn-download" onclick="handleDownload(9,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10 -->
+          <div class="book-card" data-id="10" data-cat="Science" data-fmt="EPUB" data-rating="4.9" data-badge="hot" data-free="true" data-year="2020" data-tags="astronomy universe history" onclick="openModal(10)">
+            <div class="badge-hot">HOT</div>
+            <button class="bm-btn" onclick="toggleBookmark(10,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🪐</div>
+                <div class="cover-title">Cosmos</div>
+                <div class="cover-author">Carl Sagan</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Cosmos</div>
+              <div class="book-author">Carl Sagan</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#4ade8018;color:#4ade80">Science</span>
+                <span class="book-rating">★ 4.9</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=10" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=10" class="btn-download" onclick="handleDownload(10,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11 -->
+          <div class="book-card" data-id="11" data-cat="Science" data-fmt="PDF" data-rating="4.6" data-badge="" data-free="true" data-year="2021" data-tags="DNA biology history" onclick="openModal(11)">
+            <button class="bm-btn" onclick="toggleBookmark(11,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🔬</div>
+                <div class="cover-title">The Double Helix</div>
+                <div class="cover-author">James Watson</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">The Double Helix</div>
+              <div class="book-author">James Watson</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#4ade8018;color:#4ade80">Science</span>
+                <span class="book-rating">★ 4.6</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=11" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=11" class="btn-download" onclick="handleDownload(11,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 12 -->
+          <div class="book-card" data-id="12" data-cat="Science" data-fmt="Article" data-rating="5.0" data-badge="hot" data-free="true" data-year="2022" data-tags="physics quantum electromagnetism" onclick="openModal(12)">
+            <div class="badge-hot">HOT</div>
+            <button class="bm-btn" onclick="toggleBookmark(12,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">⚛️</div>
+                <div class="cover-title">Feynman Lectures on Physics</div>
+                <div class="cover-author">Richard Feynman</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Feynman Lectures on Physics</div>
+              <div class="book-author">Richard Feynman</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#4ade8018;color:#4ade80">Science</span>
+                <span class="book-rating">★ 5.0</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=12" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=12" class="btn-download" onclick="handleDownload(12,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 13 -->
+          <div class="book-card" data-id="13" data-cat="Science" data-fmt="EPUB" data-rating="4.7" data-badge="new" data-free="false" data-year="2022" data-tags="physics popular science atoms" onclick="openModal(13)">
+            <div class="badge-new">NEW</div>
+            <button class="bm-btn" onclick="toggleBookmark(13,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🔭</div>
+                <div class="cover-title">Six Easy Pieces</div>
+                <div class="cover-author">Richard Feynman</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Six Easy Pieces</div>
+              <div class="book-author">Richard Feynman</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#4ade8018;color:#4ade80">Science</span>
+                <span class="book-rating">★ 4.7</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=13" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=13" class="btn-download" onclick="handleDownload(13,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 14 -->
+          <div class="book-card" data-id="14" data-cat="Programming" data-fmt="PDF" data-rating="4.8" data-badge="hot" data-free="true" data-year="2023" data-tags="best practices refactoring craftsmanship" onclick="openModal(14)">
+            <div class="badge-hot">HOT</div>
+            <button class="bm-btn" onclick="toggleBookmark(14,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">💻</div>
+                <div class="cover-title">Clean Code</div>
+                <div class="cover-author">Robert C. Martin</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Clean Code</div>
+              <div class="book-author">Robert C. Martin</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#a78bfa18;color:#a78bfa">Programming</span>
+                <span class="book-rating">★ 4.8</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=14" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=14" class="btn-download" onclick="handleDownload(14,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 15 -->
+          <div class="book-card" data-id="15" data-cat="Programming" data-fmt="PDF" data-rating="4.9" data-badge="" data-free="true" data-year="2023" data-tags="career philosophy tools" onclick="openModal(15)">
+            <button class="bm-btn" onclick="toggleBookmark(15,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🛠️</div>
+                <div class="cover-title">The Pragmatic Programmer</div>
+                <div class="cover-author">Hunt & Thomas</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">The Pragmatic Programmer</div>
+              <div class="book-author">Hunt & Thomas</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#a78bfa18;color:#a78bfa">Programming</span>
+                <span class="book-rating">★ 4.9</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=15" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=15" class="btn-download" onclick="handleDownload(15,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 16 -->
+          <div class="book-card" data-id="16" data-cat="Programming" data-fmt="EPUB" data-rating="4.7" data-badge="" data-free="true" data-year="2020" data-tags="patterns OOP architecture" onclick="openModal(16)">
+            <button class="bm-btn" onclick="toggleBookmark(16,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🏛️</div>
+                <div class="cover-title">Design Patterns</div>
+                <div class="cover-author">Gang of Four</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Design Patterns</div>
+              <div class="book-author">Gang of Four</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#a78bfa18;color:#a78bfa">Programming</span>
+                <span class="book-rating">★ 4.7</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=16" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=16" class="btn-download" onclick="handleDownload(16,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 17 -->
+          <div class="book-card" data-id="17" data-cat="Programming" data-fmt="PDF" data-rating="4.8" data-badge="hot" data-free="true" data-year="2022" data-tags="algorithms data structures theory" onclick="openModal(17)">
+            <div class="badge-hot">HOT</div>
+            <button class="bm-btn" onclick="toggleBookmark(17,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">📊</div>
+                <div class="cover-title">Introduction to Algorithms</div>
+                <div class="cover-author">CLRS</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Introduction to Algorithms</div>
+              <div class="book-author">CLRS</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#a78bfa18;color:#a78bfa">Programming</span>
+                <span class="book-rating">★ 4.8</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=17" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=17" class="btn-download" onclick="handleDownload(17,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 18 -->
+          <div class="book-card" data-id="18" data-cat="Programming" data-fmt="Article" data-rating="4.6" data-badge="new" data-free="true" data-year="2023" data-tags="JavaScript web async" onclick="openModal(18)">
+            <div class="badge-new">NEW</div>
+            <button class="bm-btn" onclick="toggleBookmark(18,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🌐</div>
+                <div class="cover-title">You Don't Know JS</div>
+                <div class="cover-author">Kyle Simpson</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">You Don't Know JS</div>
+              <div class="book-author">Kyle Simpson</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#a78bfa18;color:#a78bfa">Programming</span>
+                <span class="book-rating">★ 4.6</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=18" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=18" class="btn-download" onclick="handleDownload(18,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 19 -->
+          <div class="book-card" data-id="19" data-cat="Programming" data-fmt="PDF" data-rating="4.5" data-badge="new" data-free="false" data-year="2023" data-tags="Python beginner projects" onclick="openModal(19)">
+            <div class="badge-new">NEW</div>
+            <button class="bm-btn" onclick="toggleBookmark(19,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🐍</div>
+                <div class="cover-title">Python Crash Course</div>
+                <div class="cover-author">Eric Matthes</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Python Crash Course</div>
+              <div class="book-author">Eric Matthes</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#a78bfa18;color:#a78bfa">Programming</span>
+                <span class="book-rating">★ 4.5</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=19" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=19" class="btn-download" onclick="handleDownload(19,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 20 -->
+          <div class="book-card" data-id="20" data-cat="Mathematics" data-fmt="PDF" data-rating="4.8" data-badge="" data-free="true" data-year="2023" data-tags="calculus limits integrals" onclick="openModal(20)">
+            <button class="bm-btn" onclick="toggleBookmark(20,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">∫</div>
+                <div class="cover-title">Calculus: Early Transcendentals</div>
+                <div class="cover-author">James Stewart</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Calculus: Early Transcendentals</div>
+              <div class="book-author">James Stewart</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#f8717118;color:#f87171">Mathematics</span>
+                <span class="book-rating">★ 4.8</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=20" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=20" class="btn-download" onclick="handleDownload(20,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 21 -->
+          <div class="book-card" data-id="21" data-cat="Mathematics" data-fmt="PDF" data-rating="4.9" data-badge="hot" data-free="true" data-year="2022" data-tags="linear algebra vectors matrices" onclick="openModal(21)">
+            <div class="badge-hot">HOT</div>
+            <button class="bm-btn" onclick="toggleBookmark(21,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">📐</div>
+                <div class="cover-title">Linear Algebra Done Right</div>
+                <div class="cover-author">Sheldon Axler</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Linear Algebra Done Right</div>
+              <div class="book-author">Sheldon Axler</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#f8717118;color:#f87171">Mathematics</span>
+                <span class="book-rating">★ 4.9</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=21" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=21" class="btn-download" onclick="handleDownload(21,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 22 -->
+          <div class="book-card" data-id="22" data-cat="Mathematics" data-fmt="EPUB" data-rating="4.7" data-badge="" data-free="true" data-year="2022" data-tags="probability statistics random" onclick="openModal(22)">
+            <button class="bm-btn" onclick="toggleBookmark(22,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🎲</div>
+                <div class="cover-title">Introduction to Probability</div>
+                <div class="cover-author">Bertsekas & Tsitsiklis</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Introduction to Probability</div>
+              <div class="book-author">Bertsekas & Tsitsiklis</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#f8717118;color:#f87171">Mathematics</span>
+                <span class="book-rating">★ 4.7</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=22" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=22" class="btn-download" onclick="handleDownload(22,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 23 -->
+          <div class="book-card" data-id="23" data-cat="Mathematics" data-fmt="PDF" data-rating="4.6" data-badge="" data-free="true" data-year="2021" data-tags="number theory primes proofs" onclick="openModal(23)">
+            <button class="bm-btn" onclick="toggleBookmark(23,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🔢</div>
+                <div class="cover-title">Number Theory</div>
+                <div class="cover-author">Niven, Zuckerman & Montgomery</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Number Theory</div>
+              <div class="book-author">Niven, Zuckerman & Montgomery</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#f8717118;color:#f87171">Mathematics</span>
+                <span class="book-rating">★ 4.6</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=23" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=23" class="btn-download" onclick="handleDownload(23,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 24 -->
+          <div class="book-card" data-id="24" data-cat="Mathematics" data-fmt="PDF" data-rating="4.8" data-badge="new" data-free="true" data-year="2023" data-tags="graphs algorithms combinatorics" onclick="openModal(24)">
+            <div class="badge-new">NEW</div>
+            <button class="bm-btn" onclick="toggleBookmark(24,event)">🏷</button>
+            <div class="book-cover" style="background:#ffffff">
+              <div class="cover-inner">
+                <div class="cover-icon">🕸️</div>
+                <div class="cover-title">Graph Theory</div>
+                <div class="cover-author">Diestel</div>
+              </div>
+            </div>
+            <div class="book-info">
+              <div class="book-title">Graph Theory</div>
+              <div class="book-author">Diestel</div>
+              <div class="book-meta">
+                <span class="book-cat" style="background:#f8717118;color:#f87171">Mathematics</span>
+                <span class="book-rating">★ 4.8</span>
+              </div>
+              <div class="book-actions">
+                <a href="book-detail.html?id=24" class="btn-view" onclick="event.stopPropagation()">👁 View</a>
+                <a href="book-detail.html?id=24" class="btn-download" onclick="handleDownload(24,event)">⬇ Download</a>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /book-grid -->
+      </div><!-- /libraryView -->
+
+      <!-- BOOKMARKS VIEW -->
+      <div class="view-section" id="bookmarksView">
+        <div class="bookmarks-header">
+          <div class="bookmarks-title">Your Bookmarks</div>
+          <div class="bookmarks-sub">Books you've saved for later</div>
+        </div>
+        <div class="book-grid" id="bmGrid">
+          <div class="empty">
+            <div class="empty-icon">🔖</div>
+            <div class="empty-title">No bookmarks yet</div>
+            <div>Click the tag icon on any book to bookmark it</div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕ Close</button>
+      <div class="modal-inner" id="modalInner"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <span class="toast-icon" id="toastIcon">✓</span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
